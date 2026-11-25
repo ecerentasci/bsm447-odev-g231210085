@@ -1,10 +1,12 @@
-import { StyleSheet, FlatList, ActivityIndicator, SafeAreaView } from 'react-native';
+import { StyleSheet, FlatList, ActivityIndicator, SafeAreaView, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useCurrencyRates } from '@/hooks/useCurrencyRates';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Rate } from '@/types';
 
 export default function ListScreen() {
+  const router = useRouter();
   const { rates, loading, error } = useCurrencyRates();
 
   if (loading) {
@@ -29,10 +31,12 @@ export default function ListScreen() {
         data={rates}
         keyExtractor={(item) => item.code}
         renderItem={({ item }) => (
-          <ThemedView style={styles.rateItem}>
-            <ThemedText type="default">{item.code}</ThemedText>
-            <ThemedText type="default">{item.rate.toFixed(2)}</ThemedText>
-          </ThemedView>
+          <Pressable onPress={() => router.push(`/detail/${item.code}`)}>
+            <ThemedView style={styles.rateItem}>
+              <ThemedText type="default">{item.code}</ThemedText>
+              <ThemedText type="default">{item.rate.toFixed(2)}</ThemedText>
+            </ThemedView>
+          </Pressable>
         )}
         contentContainerStyle={styles.listContent}
       />
