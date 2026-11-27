@@ -1,20 +1,16 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { Colors } from '@/constants/theme';
-import ListScreen from './index';
-import SavedScreen from './saved';
-
-const Tab = createBottomTabNavigator();
 
 export default function TabsLayout() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
 
   return (
-    <Tab.Navigator
+    <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.text,
+        tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
           backgroundColor: colors.background,
@@ -22,22 +18,20 @@ export default function TabsLayout() {
           borderTopWidth: 1,
         },
       }}>
-      <Tab.Screen
+      <Tabs.Screen
         name="index"
-        component={ListScreen}
         options={{
           title: 'Liste',
           tabBarLabel: 'Liste',
         }}
       />
-      <Tab.Screen
+      <Tabs.Screen
         name="saved"
-        component={SavedScreen}
         options={{
           title: 'Kaydedilenler',
           tabBarLabel: 'Kaydedilenler',
         }}
       />
-    </Tab.Navigator>
+    </Tabs>
   );
 }

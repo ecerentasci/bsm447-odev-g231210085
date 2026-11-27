@@ -1,12 +1,17 @@
-import { StyleSheet, SafeAreaView, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, SafeAreaView, ScrollView, Pressable, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCurrencyRates } from '@/hooks/useCurrencyRates';
 import { useSavedRates } from '@/hooks/useSavedRates';
+import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
+// Detayda gösterilecek GBP miktarları
+const AMOUNTS = [1, 10, 100, 1000];
+
 export default function DetailScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { code } = useLocalSearchParams<{ code: string }>();
   const { rates, date } = useCurrencyRates();
   const { saveRate, removeRate, isSaved, savedRates } = useSavedRates();
@@ -32,52 +37,51 @@ export default function DetailScreen() {
     }
   };
 
+  const card = { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Pressable onPress={() => router.back()}>
-          <ThemedText type="subtitle" style={styles.backButton}>
-            ← Geri
-          </ThemedText>
+          <ThemedText style={[styles.backButton, { color: theme.accent }]}>← Geri</ThemedText>
         </Pressable>
 
-        <ThemedText type="title" style={styles.title}>
-          {code}
-        </ThemedText>
+        <ThemedText type="title" style={styles.title}>{code}</ThemedText>
 
-        <ThemedView style={styles.section}>
-          <ThemedText type="default" style={styles.rateValue}>
-            Kur: {rate.rate.toFixed(4)}
+        {/* Düz kur, ters kur ve kurun tarihi */}
+        <View style={[styles.card, card]}>
+          <ThemedText style={[styles.rateValue, { color: theme.accent }]}>
+            1 GBP = {rate.rate.toFixed(4)} {code}
           </ThemedText>
-          <ThemedText type="small" style={styles.dateText}>
-            Tarih: {date}
+          <ThemedText style={styles.inverseValue}>
+            1 {code} = {(1 / rate.rate).toFixed(4)} GBP
           </ThemedText>
-        </ThemedView>
+          <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: 6 }}>
+            Kur tarihi: {date}
+          </ThemedText>
+        </View>
 
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Dönüşümler
-          </ThemedText>
-          <ThemedView style={styles.conversionItem}>
-            <ThemedText>1 GBP =</ThemedText>
-            <ThemedText>{(1 * rate.rate).toFixed(2)} {code}</ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.conversionItem}>
-            <ThemedText>10 GBP =</ThemedText>
-            <ThemedText>{(10 * rate.rate).toFixed(2)} {code}</ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.conversionItem}>
-            <ThemedText>100 GBP =</ThemedText>
-            <ThemedText>{(100 * rate.rate).toFixed(2)} {code}</ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.conversionItem}>
-            <ThemedText>1000 GBP =</ThemedText>
-            <ThemedText>{(1000 * rate.rate).toFixed(2)} {code}</ThemedText>
-          </ThemedView>
-        </ThemedView>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>Dönüşümler</ThemedText>
+        <View style={[styles.card, card]}>
+          {AMOUNTS.map((amount, i) => (
+            <View
+              key={amount}
+              style={[styles.conversionItem, i > 0 && { borderTopWidth: 1, borderTopColor: theme.backgroundSelected }]}>
+              <ThemedText style={{ color: theme.textSecondary }}>{amount} GBP</ThemedText>
+              <ThemedText style={styles.conversionValue}>{(amount * rate.rate).toFixed(2)} {code}</ThemedText>
+            </View>
+          ))}
+        </View>
 
-        <Pressable style={styles.button} onPress={handleToggleSave}>
-          <ThemedText style={styles.buttonText}>
+        <Pressable
+          style={[
+            styles.button,
+            isSavedFlag
+              ? { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: theme.accent }
+              : { backgroundColor: theme.accent },
+          ]}
+          onPress={handleToggleSave}>
+          <ThemedText style={[styles.buttonText, { color: isSavedFlag ? theme.accent : theme.onAccent }]}>
             {isSavedFlag ? 'Kaydedilenlerden Çıkar' : 'Kaydet'}
           </ThemedText>
         </Pressable>
@@ -87,62 +91,17 @@ export default function DetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  backButton: {
-    marginBottom: 16,
-    color: '#007AFF',
-  },
-  title: {
-    marginBottom: 20,
-    fontSize: 28,
-  },
-  section: {
-    marginBottom: 24,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  rateValue: {
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  dateText: {
-    color: '#666',
-  },
-  sectionTitle: {
-    marginBottom: 12,
-  },
-  conversionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 8,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
-  },
+  container: { flex: 1 },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scrollContent: { padding: 16, paddingBottom: 32 },
+  backButton: { marginBottom: 12, fontSize: 16, fontWeight: '600' },
+  title: { marginBottom: 16, fontSize: 32 },
+  card: { borderRadius: 18, borderWidth: 1, padding: 16, marginBottom: 20 },
+  rateValue: { fontSize: 22, fontWeight: '700' },
+  inverseValue: { fontSize: 16, marginTop: 4 },
+  sectionTitle: { marginBottom: 10 },
+  conversionItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12 },
+  conversionValue: { fontWeight: '700' },
+  button: { paddingVertical: 15, borderRadius: 14, alignItems: 'center', marginTop: 4 },
+  buttonText: { fontWeight: '700', fontSize: 16 },
 });

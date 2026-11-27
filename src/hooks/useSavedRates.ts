@@ -66,11 +66,16 @@ export function useSavedRates() {
     [savedRates]
   );
 
+  const refetch = useCallback(async () => {
+    await loadSavedRates();
+  }, []);
+
   return {
     savedRates,
     loading,
     saveRate,
     removeRate,
     isSaved,
+    refetch,
   };
 }

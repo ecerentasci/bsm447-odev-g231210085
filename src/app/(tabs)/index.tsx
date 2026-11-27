@@ -1,13 +1,14 @@
-import { StyleSheet, FlatList, ActivityIndicator, SafeAreaView, Pressable, TextInput } from 'react-native';
+import { StyleSheet, FlatList, ActivityIndicator, SafeAreaView, Pressable, TextInput, View } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useCurrencyRates } from '@/hooks/useCurrencyRates';
+import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Rate } from '@/types';
 
 export default function ListScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { rates, loading, error } = useCurrencyRates();
   const [searchText, setSearchText] = useState('');
   const [amount, setAmount] = useState('1');
@@ -15,7 +16,7 @@ export default function ListScreen() {
   if (loading) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={theme.accent} />
       </ThemedView>
     );
   }
@@ -34,47 +35,50 @@ export default function ListScreen() {
 
   const numAmount = parseFloat(amount) || 0;
 
+  // Kutuların rengi temadan geliyor
+  const inputStyle = [
+    styles.input,
+    { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected, color: theme.text },
+  ];
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
         data={filteredRates}
         keyExtractor={(item) => item.code}
-        ListHeaderComponent={() => (
-          <ThemedView style={styles.headerContainer}>
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={
+          <View style={styles.headerContainer}>
             <TextInput
-              style={styles.input}
+              style={inputStyle}
               placeholder="Para birimi ara (örn: USD)"
               value={searchText}
               onChangeText={setSearchText}
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.textSecondary}
             />
             <TextInput
-              style={styles.input}
+              style={inputStyle}
               placeholder="Miktar (varsayılan: 1)"
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.textSecondary}
             />
-          </ThemedView>
-        )}
+          </View>
+        }
         renderItem={({ item }) => (
           <Pressable onPress={() => router.push({ pathname: '/detail/[code]' as any, params: { code: item.code } })}>
-            <ThemedView style={styles.rateItem}>
-              <ThemedView style={styles.rateLeft}>
-                <ThemedText type="default" style={styles.rateName}>
-                  {item.code}
-                </ThemedText>
-              </ThemedView>
-              <ThemedView style={styles.rateRight}>
-                <ThemedText type="small" style={styles.rateSmall}>
+            <View style={[styles.rateItem, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+              <ThemedText style={styles.rateName}>{item.code}</ThemedText>
+              <View style={styles.rateRight}>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
                   1 GBP = {item.rate.toFixed(2)}
                 </ThemedText>
-                <ThemedText type="default" style={styles.rateConverted}>
+                <ThemedText style={[styles.rateConverted, { color: theme.accent }]}>
                   {numAmount} GBP = {(numAmount * item.rate).toFixed(2)}
                 </ThemedText>
-              </ThemedView>
-            </ThemedView>
+              </View>
+            </View>
           </Pressable>
         )}
         contentContainerStyle={styles.listContent}
@@ -84,62 +88,29 @@ export default function ListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 16,
-    gap: 12,
-  },
+  container: { flex: 1 },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  headerContainer: { paddingTop: 12, paddingBottom: 16, gap: 12 },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 16,
-    color: '#000',
   },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
+  listContent: { paddingHorizontal: 16, paddingBottom: 16 },
   rateItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    alignItems: 'center',
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
+    marginBottom: 10,
+    borderRadius: 16,
+    borderWidth: 1,
   },
-  rateLeft: {
-    justifyContent: 'center',
-  },
-  rateRight: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  rateName: {
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  rateSmall: {
-    color: '#666',
-    marginBottom: 4,
-  },
-  rateConverted: {
-    fontWeight: '500',
-    color: '#007AFF',
-  },
-  errorText: {
-    color: '#ff3333',
-  },
+  rateRight: { alignItems: 'flex-end' },
+  rateName: { fontWeight: '700', fontSize: 18 },
+  rateConverted: { fontWeight: '600', marginTop: 2 },
+  errorText: { color: '#F87171' },
 });
